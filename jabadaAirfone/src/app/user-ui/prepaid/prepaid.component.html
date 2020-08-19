@@ -1,0 +1,119 @@
+<div *ngFor="let g of loadedPostsgreet">
+  <div class="jumbotron text-center"><h2 class="text-primary text"> {{p.name}},Welcome YOU to Prepaid section </h2>
+  </div>
+  <!-- <div class="form-group">
+    <input id="mobile_number" class="form-control" placeholder="Enter mob no..." >
+  </div><button class="btn btn-success" (click)="getuserusage()">SUBMIT</button> -->
+   <div class="container" >
+  
+       <div class="row">
+        <div *ngFor="let p of loadedPosts">
+           <div class="col-sm-6 ">
+               <div class="row">
+                   <div class="col-sm-12">
+                       <div class="card">
+                          <div class="card-body">
+                            <h3 class="card-title text-danger" style="padding: 20px;"><b>INTERNET</b></h3>
+                            <h4 class="card-text" style="padding: 20px;"> remaining data : {{p.data}} GB </h4>
+                            
+                          </div>
+                        </div><br>
+                   </div>
+               </div>
+               <div class="row">
+                  <div class="col-sm-12">
+                      <div class="card">
+                          <div class="card-body">
+                            <h3 class="card-title text-danger" style="padding: 20px;"><b>TALK</b></h3>
+                            <h4 class="card-text" style="padding: 20px;">remaining talk time : {{p.talktime}} mins </h4>
+                            
+                          </div>
+                        </div><br>
+                  </div>
+  
+               </div>
+               <div class="row">
+                  <div class="col-sm-12">
+                      <div class="card">
+                          <div class="card-body">
+                            <h3 class="card-title text-danger"style="padding: 20px;"><b>SMS USAGE </b></h3>
+                            <h4 class="card-text"style="padding: 20px;">remaining sms : {{p.sms}} SMS</h4>
+                            
+                          </div>
+                        </div><br>
+                      
+                  </div>
+              </div>
+           </div>
+          </div>
+           <div class="col-sm-6">
+               <div class="card">
+                  <div class="card-body">
+                    <h2 class="card-title text-danger"style="padding: 20px;">Bill History</h2>
+                      <div class="form-group">
+                          <label class="col-md-5 control-label" for="fullname">Start date : </label>
+                          <input id="pre_startdate" type="date" class="form-control" >
+                      </div> 
+                      <div class="form-group"> 
+                          <label class="col-md-5 control-label" for="fullname">End date : </label>
+                          <input id="pre_enddate" type="date" class="form-control" >
+                      </div>           
+                      <span  class="col-md-offset-5"><a href="#" class="card-link btn btn-default">Email Bill</a></span>
+                  </div>
+                </div>
+                
+                      <!-- <div  class="form-group">
+                          
+                        <div class="card-title text-danger"style="padding: 20px;"><h2>Bill summary</h2></div>
+                        <div  class="form-group col-md-5 col-md-offset-3">
+                          <div  class="form-group">
+                          <input id="pre_phoneno" type="text" class="form-control" placeholder="your Phone no..." disabled><br>
+                          </div>
+                          <input id="pre_palnname" type="text" class="form-control" placeholder="your Plan name..." disabled><br>
+                          <div  class="form-group">
+                          <input id="pre_amount" type="text" class="form-control" placeholder="Outstanding Amount..." disabled>
+                      </div>
+                  </div>
+  
+                      
+              </div> -->
+              
+           </div>
+          <!--  <div class="row">
+              <div  class="form-group col-md-offset-8">
+                  <button type="button" class="btn btn-danger">pay Bill</button>
+                  </div>
+              </div> -->
+       </div>
+   </div>
+  </div> 
+  
+   
+  <div class="container">
+    <div class="row">
+      <div class="col-md-offset-3  col-md-6">
+        <form>
+          
+          <div *ngFor=" let o of loadedPostsoffer">
+            {{o.plan_name}}
+              <div class="card ws p">
+                <div class="card-body">
+                    <h4 class="card-title">
+                      <b>{{o.validity}}</b>
+                    </h4>
+                    <h5 class="card-text">
+                      <p>₹{{o.rate}} | {{o.plan_benefit}} | {{o.data}} GB/Day | {{o.plan_name}} Days | {{o.sms}} sms/DAY | {{o.speed}}mbps</p>
+                    </h5>
+                    <a  class="btn btn-primary" >    <!-- --------------gateway--------------------------- -->
+                      <p>₹{{o.rate}}</p>
+                    </a>
+                </div>
+            </div><br>
+          </div>
+          
+      </form>   
+           
+      </div>
+    </div>
+  </div>
+  

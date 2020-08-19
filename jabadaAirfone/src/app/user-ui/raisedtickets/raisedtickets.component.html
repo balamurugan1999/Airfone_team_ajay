@@ -1,0 +1,48 @@
+
+<div class="wholecontainer">
+<div class="topnav">
+    <nav class="navbar navbar-inverse ">
+<ul class="nav navbar-nav">
+<!-- <li><a class="nav-item nav-link" routerLink="/prepaid"  ><b>PREPAID</b></a></li>
+<li><a class="nav-item nav-link" routerLink="/postpaid"  ><b>POSTPAID</b></a></li>
+<li><a class="nav-item nav-link" routerLink="/broadband" ><b>BROADBAND</b></a></li> -->
+<li><a class="nav-item nav-link" routerLink="/userloginsucess"><b>HOME</b></a></li>
+<li><a class="nav-item nav-link" routerLink="/createqueries"><b>CREATE QUERIES</b></a></li>
+<li><a class="nav-item nav-link" routerLink="/raisedtickets" ><b>RAISED TICKETS</b></a></li>
+<li><a class="nav-item nav-link" routerLink="/userloginsucess" ><b>CHANGE PLAN</b></a></li>
+<li><a class="glyphicon glyphicon-log-out " routerLink=""><b> LOGOUT</b></a></li>
+</ul>
+    </nav>
+</div>
+</div>
+
+
+<div class="jumbotron text-center"><h2 class="text-primary">Your raised tickets area </h2></div>
+
+<div >
+    <div   class="col-md-offset-3 col-md-6" style="background-color:whitesmoke;">
+        <h2>RAISED TICKETS</h2>
+        <!-- <div class="form-group">
+            <input id="mobile_number" class="form-control" placeholder="Enter mob no..." [(ngModel)]="mobile_number">
+        </div> -->
+        <!-- <button class="btn btn-success" (click)="getquery()">SUBMIT</button> -->
+        <div *ngFor="let p of loadedPosts">
+            <div class="panel panel-primary">  
+                <div class="panel-heading">  
+                <h3 id="qid" class="panel-title"><strong>QUERY ID:  {{p.query_id}}</strong></h3>  
+                </div>  
+                
+                <div id="userquery" class="panel-body col-lg-15" >  
+                    <textarea id="query" class="form-control" disabled >Your query: {{p.query}}</textarea>
+                </div>  
+                <div id="adminreply" class="panel-footer">  
+                <!-- <strong>ADMIN's ANSWER</strong>  --> 
+                <textarea id="solution" class="form-control" disabled >Answer: {{p.solution}} </textarea>
+                </div>  
+            </div>
+            <h4><strong> Satisfied with this answer ? </strong></h4>
+            <div class="container"><div class="col-xs-15"> <button class="btn btn-success" (click)="updatequery(p.query_id)">Yes :)</button> or
+            <button class="btn btn-danger md-6" (click)="nofunc()">No :(</button></div></div>
+        </div><br>
+    </div>
+</div>

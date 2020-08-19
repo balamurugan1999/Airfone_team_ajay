@@ -1,0 +1,29 @@
+.card1{background-color:gray;height:280px;}
+.cost{color:red;font-weight: bolder;}
+.center{text-align: center;}
+.textBorder{border:none;}
+.textBorder{border-bottom:solid 1px black;}
+
+.concard{margin: auto;background-color: #3A1564;border-radius: 20px; padding:70px;box-shadow: 0 5px 8px 0 rgba(0, 0, 0, 0.7), 0 12px 26px 0 rgba(0, 0, 0, 0.19);}
+.concat,    label{color:white;}
+.concat,span{color:white;}
+#AadharCard{color:white;}
+.ajay{box-shadow: 0 5px 8px 0 rgba(0, 0, 0, 0.2), 0 9px 26px 0 rgba(0, 0, 0, 0.19);}
+.card1,h3{margin-top: 0px;}
+.submenucolor{color:rgb(244, 234, 255);}
+.kl{padding-top:140px;}
+
+.topnav {
+    margin-left:20%;
+    margin-right:20%;
+      overflow: hidden;
+      /* background-color: #333; */
+    }
+  #aj{color:black;}
+  /* .nv{padding-left: 35% ;}
+  .pl{padding-left: 25%;} */
+  /* .ws{width: 40rem;} */
+  a.nav-item{margin:0px}
+  .bg-primary{margin:0px}
+  .card{box-shadow: 0 5px 8px 0 rgba(0, 0, 0, 0.2), 0 9px 26px 0 rgba(0, 0, 0, 0.19);padding: 20px;}
+  .submenucolor{color:rgb(244, 234, 255);}

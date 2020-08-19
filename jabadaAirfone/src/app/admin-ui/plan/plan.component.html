@@ -1,0 +1,114 @@
+<app-admin-nav></app-admin-nav>
+
+    <div class="col-md-2">
+        <nav class="nav-sidebar">
+            <ul class="nav">
+                <li class="active"><a routerLink="/Admin-Create-Edit-plans"(click)="newplanfunc()">Create Plan</a></li>
+                <li class="nav-divider"></li>
+                <li><a routerLink="/Admin-Create-Edit-plans" (click)="editplanfunc()">Edit Plan</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="container">
+        <!-- Create plan -->
+        <div *ngIf="newplan">
+            <form  class="col-md-offset-1 col-md-7" (ngSubmit)="createPlanOperation(createPlanName.value,createPlanValidity.value,createPlanAmt.value,createPlanData.value,createPlanTalkTime.value,createPlanSms.value,createPlanSpeed.value,createPlanType.value,createPlanBenefits.value)">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="card-title"><h1>Create Plan</h1></div>
+                            <div class="form-group ">
+                                <input type="text" class="form-control" placeholder="Plan Name" #createPlanName required>
+                            </div>
+                            <div class="form-group ">
+                                <input type="text" class="form-control" placeholder="Plan Validity" #createPlanValidity required>
+                            </div>
+                           
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Plan Amount in INR" #createPlanAmt required>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Plan Data in GB" #createPlanData>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Plan Talktime in Minutes "#createPlanTalkTime required>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Plan SMS" #createPlanSms required>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Plan Speed in Mbps" #createPlanSpeed required>
+                            </div>
+                            <div class="form-group"> 
+                                <select  class="form-control" name="Plan Type" id="plantype" placeholder="Plan Type" #createPlanType >
+                                    <option value="null">Select Options</option>
+                                    <option value="prepaid">Prepaid</option>
+                                    <option value="postpaid" >Postpaid</option>
+                                    <option value="broadband">Broadband</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Plan Benefits" #createPlanBenefits>
+                            </div>
+                        
+                            <button  type="submit" class="btn btn-success"> Submit</button>
+                    </div>
+                </div>
+            </form>  
+
+        </div>
+
+
+
+        <!-- Edit plan -->
+        <div *ngIf="editplan">
+            <form  class="col-md-offset-1 col-md-7" (ngSubmit)="editPlanOperation(editPlanName.value,editvalidity.value,editAmount.value,editData.value,editTalktime.value,editSms.value,editSpeed.value,editType.value,editBenefit.value)">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="card-title"><h1>Edit Plan</h1></div>
+                            <div class="form-group">
+                                <!-- <input type="text" class="form-control" placeholder="Plan Name"> -->
+                                <select  class="form-control"  name="Plan Type" id="plantype" placeholder="Plan Type" #editPlanName>
+                                    <option value="null">Select Options</option>
+                                    <option *ngFor="let i of PlanNameArray" value="{{i.plan_name}}">{{i.plan_name}}</option>
+                                    
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Plan Validity" #editvalidity>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Plan Amount" #editAmount>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Plan Data" #editData>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Plan Talktime" #editTalktime>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Plan Sms" #editSms>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Plan Speed" #editSpeed>
+                            </div>
+                            <div class="form-group">
+                                <select  class="form-control" name="Plan Type" id="plantype" placeholder="Plan Type"  #editType>
+                                    <option value="null">Select Options</option>
+                                    <option value="Prepaid">Prepaid</option>
+                                    <option value="Postpaid">Postpaid</option>
+                                    <option value="Broadband">Broadband</option>
+                                    <option value="Product">Product</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Plan Benefit" #editBenefit>
+                            </div>
+                        
+                            <button type="submit" class="btn btn-success"> Submit</button>
+                    </div>
+                </div>
+            </form>  
+
+        </div>
+    </div>

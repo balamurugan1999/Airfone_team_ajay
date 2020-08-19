@@ -1,0 +1,86 @@
+
+<app-admin-nav></app-admin-nav>
+<div  id="lp">
+    <div class="col-md-2" >
+        <nav class="nav-sidebar">
+            <ul class="nav">
+                <li class="active"><a routerLink="/Admin-Query-Response"(click)="newqueryfunc()">New User Queries</a></li>
+                <li class="nav-divider"></li>
+                <li><a routerLink="/Admin-Query-Response" (click)="raisedqueryfunc()">Raised User Queries</a></li>
+            </ul>
+        </nav>
+    </div>
+</div>
+    
+
+<!-- <br><br><br><br><br><br> -->
+   
+    <div class="container">
+        <div class="col-lg-offset-3 col-lg-6 col-md-offset-3 col-md-6">
+            <h1 *ngIf="raisedquery">Raised Queries</h1>
+            <h1 *ngIf="newquery">New Query</h1> <br><br><br><br>
+            </div>
+        <!-- Create plan -->
+        <div *ngIf="newquery">
+              
+            <div class="row">
+                    <form  class="col-lg-offset-3 col-lg-6 col-md-offset-3 col-md-6" *ngFor="let i of gettingUserQuery" >
+                        <div class="card">
+                            <div class="card-body">
+                                    <p>Question asked by :<span id='customer_id'>{{i.query_id}}</span></p>
+                                    <div class="form-group">
+                                        <textarea class="form-control" disabled >{{i.query}}</textarea>
+                                    </div>
+                                    
+                                    <div>
+                                        <div class="form-group">
+                                            <textarea type="text" class="form-control" placeholder="Type your response here"  #titleInput></textarea>
+                                        </div>
+                                        <button type="submit" (click)="sumbitAdminSolution(titleInput.value,i.query_id)" class="btn btn-success" > Submit</button>
+                                       {{solution}}
+                                    </div>
+                            </div>
+                        </div>
+                        <br><br>
+                    </form> 
+                   
+                </div> <br> <br> 
+                <br> <br> 
+        </div>
+
+
+
+        <!-- Edit plan -->
+        <div *ngIf="raisedquery">
+          
+            <div class="row">
+                <form  class="col-lg-offset-3 col-lg-6 col-md-offset-3 col-md-6"  *ngFor="let i of gettingRaisedUserQuery">
+                    <div class="card">
+                        <div class="card-body">
+                                <p>Question asked by :<span id='customer_id'>{{i.query_id}}</span></p>
+                                <div class="form-group">
+                                    <textarea class="form-control" disabled >{{i.query}}</textarea>
+                                </div>
+                        
+                                <div>
+                                    <div class="form-group">
+                                        <textarea class="form-control" placeholder="Type your response here"  #titleInputa>{{i.solution}}</textarea>
+                                    </div>
+                                    <button type="submit" (click)="sumbitAdminRaisedSolution(titleInputa.value,i.query_id)" class="btn btn-success"> Submit</button>
+                                </div>
+                        </div>
+                    </div>
+                </form> 
+               
+            </div> <br> <br> 
+            <br> <br> 
+           
+           
+
+        </div>
+
+
+       
+
+
+    </div>

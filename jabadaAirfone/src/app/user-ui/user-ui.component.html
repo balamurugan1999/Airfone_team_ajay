@@ -1,0 +1,139 @@
+
+<div class="wholecontainer">
+    <div class="topnav">
+        <nav class="navbar navbar-inverse ">
+ <ul class="nav navbar-nav">
+    <!-- <li><a class="nav-item nav-link" routerLink="/prepaid"  ><b>PREPAID</b></a></li>
+    <li><a class="nav-item nav-link" routerLink="/postpaid"  ><b>POSTPAID</b></a></li>
+    <li><a class="nav-item nav-link" routerLink="/broadband" ><b>BROADBAND</b></a></li> -->
+    <li><a class="nav-item nav-link" routerLink="/userloginsucess"><b>HOME</b></a></li>
+    <li><a class="nav-item nav-link" routerLink="/createqueries"><b>CREATE QUERIES</b></a></li>
+    <li><a class="nav-item nav-link" routerLink="/raisedtickets" ><b>RAISED TICKETS</b></a></li>
+    <li><a class="nav-item nav-link" (click)="changeplanfunc()" ><b>CHANGE PLAN</b></a></li>
+    <li><a class="glyphicon glyphicon-log-out " routerLink=""><b> LOGOUT</b></a></li>
+  </ul>
+        </nav>
+    </div>
+</div>
+
+<router-outlet></router-outlet>
+
+<!-- ---------------------------------pre,post,broad---------------------------------------------- -->
+<div class="form-group">
+<!-- <input id="mobile_number" class="form-control" placeholder="Enter mob no..." [(ngModel)]="mobile_number">
+<button class="btn btn-success" (click)="getplantype()">SUBMIT</button>  -->
+</div>
+<form>
+<div *ngFor="let p of loadedPosts">{{p.plan_type}}
+    <div *ngIf="p.plan_type=='prepaid'">
+        <h1>prepaid</h1>
+        <app-prepaid></app-prepaid>
+    </div>
+
+    <div *ngIf="p.plan_type=='postpaid'">
+        <app-postpaid></app-postpaid>
+    </div>
+
+    <div *ngIf="p.plan_type=='broadband'">
+        <app-broadband></app-broadband>
+    </div>
+</div>
+</form>
+
+<!-- -----------------------------change plan for corressponding user----------------------------------------------- -->
+
+<div *ngIf="changeplan">
+
+<form >
+    <div *ngFor="let p of loadedPosts">{{p.plan_type}}
+        <div *ngIf="p.plan_type=='prepaid'">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-offset-3  col-md-6">
+                <div  class="pl" > 
+                  <form>
+                    <div *ngFor="let i of loadedPoststraiff">
+                      <div *ngIf="i.plan_type=='prepaid'"> 
+                        <p>PREPAID</p>
+                        <div class="card ws p">
+                          <div class="card-body">
+                              <h5 class="card-title">
+                                <p><b>{{i.plan_name}}</b></p>
+                              </h5>
+                              <h5 class="card-text">
+                                <p>₹{{i.rate}} | {{i.plan_benefit}} | {{i.data}} GB/Day | {{i.validity}} Days | {{i.sms}} sms/DAY | {{i.speed}}mbps</p>
+                              </h5>
+                              <a href="#" class="btn btn-primary"><!-- --------------payment gateway----------------------------- -->
+                                <p>₹{{i.rate}}</p>
+                              </a>
+                          </div>
+                      </div><br>
+                    </div>
+                    </div>
+                  </form>   
+                </div>
+                </div>
+              </div>
+            </div>
+        </div>
+    
+        <div *ngIf="p.plan_type=='postpaid'">
+            <div class="container">
+            <div class="row">
+                <div  class="pl"  >
+                  <p>POSTPAID</p>
+                  <form>
+                      <div *ngFor="let i of loadedPoststraiff">
+                        <div *ngIf="i.plan_type=='postpaid'"> 
+                          <div class="card ws p">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                  <p><b>{{i.plan_name}}</b></p>
+                                </h5>
+                                <h5 class="card-text">
+                                  <p>₹{{i.rate}} | {{i.plan_benefit}} | {{i.data}} GB/Day | {{i.validity}} Days | {{i.sms}} sms/DAY | {{i.speed}}mbps</p>
+                                </h5>
+                                <a  class="btn btn-primary"(click)="updateuserplan(i.plan_id,i.plan_type,mobile_number)">
+                                  <p>₹{{i.rate}}</p>
+                                </a>
+                            </div>
+                        </div><br>
+                      </div>
+                      </div>
+                  </form>   
+                </div>
+              </div>
+            </div>
+        </div>
+        <div *ngIf="p.plan_type=='broadband'">
+            <div class="container">
+            <div class="row">
+                <div  class="pl" >
+                  <p>BROADBAND</p>
+                  <form>
+                    <div *ngFor="let i of loadedPoststraiff">
+                      <div *ngIf="i.plan_type=='broadband'"> 
+                        <div class="card ws p">
+                          <div class="card-body">
+                              <h5 class="card-title">
+                                <p><b>{{i.plan_name}}</b></p>
+                              </h5>
+                              <h5 class="card-text">
+                                <p>₹{{i.rate}} | {{i.plan_benefit}} | {{i.data}} GB/Day | {{i.validity}} Days | {{i.sms}} sms/DAY | {{i.speed}}mbps</p>
+                              </h5>
+                              <a class="btn btn-primary"(click)="updateuserplan(i.plan_id,i.plan_type,mobile_number)">
+                                <p>₹{{i.rate}}</p>
+                              </a>
+                          </div>
+                      </div><br>
+                    </div>
+                    </div>
+                </form>   
+                     
+                </div>
+              </div>
+            </div>
+        </div>
+    </div>
+    </form>
+</div>

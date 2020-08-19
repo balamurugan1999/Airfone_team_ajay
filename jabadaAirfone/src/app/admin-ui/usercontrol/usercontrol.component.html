@@ -1,0 +1,151 @@
+<app-admin-nav></app-admin-nav>
+
+    <div class="col-sm-2">
+        <nav class="nav-sidebar">
+            <ul class="nav">
+                <li class="active"><a routerLink="/Admin-User-Control" (click)="blockmenufunc()">Block User</a></li>
+                <li class="nav-divider"></li>
+                <li><a routerLink="/Admin-User-Control" (click)="activatemenufunc()">Activate User</a></li>
+                <li class="nav-divider"></li>
+                <li><a routerLink="/Admin-User-Control" (click)="deactivatemenufunc()">Deactivate User</a></li>
+                <li class="nav-divider"></li>
+                <li><a routerLink="/Admin-User-Control" (click)="generatebillmenufunc()">Generate Bill</a></li>
+                <li class="nav-divider"></li>
+                <li><a routerLink="/Admin-User-Control" (click)="remindermailmenufunc()">Reminder Mail</a></li>
+                
+            </ul>
+        </nav>
+    </div>
+
+<div *ngIf="blockuser" class="container">
+    <h3 class="col-sm-offset-2 col-sm-4"  [style.margin-top.px]="setblockmargin">Block User</h3>
+    <form [formGroup]="blockuserForm" (ngSubmit)="blockuserfunc(blocknumber.value)"  >
+        
+        <div class="form-group col-sm-offset-2 col-sm-4 " >
+            
+            <input type="text" class="form-control" placeholder="Enter Mobile or BBN Number" formControlName="phoneNum" #blocknumber >
+            <span *ngIf="!blockuserForm.get('phoneNum').valid && (blockuserForm.get('phoneNum').touched ) " class="help-block" >Please enter a valid Phone number or BBN !!</span>    
+            
+        </div>
+        <div class="col-sm-2">
+            <button type="submit" class="btn btn-danger">Get Details</button>
+        </div>
+    </form>
+</div>
+
+<div *ngIf="activateuser" class="container">
+    <h3 class="col-sm-offset-2 col-sm-4"  [style.margin-top.px]="setactivatemargin">Activate User</h3>
+    <form [formGroup]="activateuserForm" (ngSubmit)="activateuserfunc(activatenumber.value)"  >
+        <div class="form-group col-sm-offset-2 col-sm-4 " >
+            <input type="text" class="form-control" placeholder="Enter Mobile or BBN Number" formControlName="phoneNum" #activatenumber >
+            <span *ngIf="!activateuserForm.get('phoneNum').valid && (activateuserForm.get('phoneNum').touched ) " class="help-block" >Please enter a valid Phone number or BBN !!</span>    
+            
+        </div>
+        <div class="col-sm-2">
+            <button type="submit" class="btn btn-danger">Get Details</button>
+        </div>
+    </form>
+</div>
+
+<div *ngIf="deactivateuser" class="container">
+    <h3 class="col-sm-offset-2 col-sm-4"  [style.margin-top.px]="setdeactivatemargin">Deactivate User</h3>
+    <form [formGroup]="deactivateuserForm" (ngSubmit)="deactivateuserfunc(deactivatenumber.value)"  >
+        <div class="form-group col-sm-offset-2 col-sm-4 " >
+            <input type="text" class="form-control" placeholder="Enter Mobile or BBN Number" formControlName="phoneNum" #deactivatenumber>
+            <span *ngIf="!deactivateuserForm.get('phoneNum').valid && (deactivateuserForm.get('phoneNum').touched ) " class="help-block" >Please enter a valid Phone number or BBN !!</span>    
+            
+        </div>
+        <div class="col-sm-2">
+            <button type="submit" (click)="remindermailfunc()" class="btn btn-danger">Get Details</button>
+        </div>
+        
+    </form>
+</div>
+
+<div *ngIf="generatebill" class="container">
+    <h3 class="col-sm-offset-2 col-sm-4" >Generate Bill </h3>
+    <button type="submit" (click)="generatebillfunc()" class="btn btn-danger">Send</button>
+    
+</div>
+
+<div *ngIf="remindermail" class="container">
+    <h3 class="col-sm-offset-2 col-sm-4" >Reminder Bill</h3>
+    <button type="submit" (click)="remindermailfunc()"class="btn btn-danger">Send</button>
+    
+</div>
+
+<div *ngIf="deactivateUserdetail">
+    <form  (ngSubmit)="deactivateoperation()" class="col-sm-offset-4 col-sm-4 col-sm-4">
+        <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" id="name" class="form-control textBorder" placeholder="{{usercontrolarray[0].name}}" disabled><br>
+        </div>
+
+        <div class="form-group">
+            <label for="address">Address</label>
+            <input type="text" id="address" class="form-control  textBorder" placeholder="{{usercontrolarray[0].address}}" disabled><br>
+        </div>
+        <div class="form-group">
+            <label for="email">Email Id</label>
+            <input type="email" id="email" class="form-control textBorder"placeholder="{{usercontrolarray[0].email_id}}" disabled><br>
+        </div>
+        <div class="form-group">
+            <label for="AadharCardNumber">Aadhar Card Number</label>
+            <input type="text" id="AadharCardNumber" class="form-control textBorder"placeholder="{{usercontrolarray[0].aadhar_num}}" disabled><br>
+        </div>
+        <input type="submit" class="btn btn-danger" value="Deactivate    User">
+    </form>       
+</div>
+
+
+<div *ngIf="activateUserdetail">
+    <form  (ngSubmit)="activateoperation()" class="col-sm-offset-4 col-sm-4 col-sm-4">
+        <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" id="name" class="form-control textBorder" placeholder="{{usercontrolarray[0].name}}" disabled><br>
+        </div>
+
+        <div class="form-group">
+            <label for="address">Address</label>
+            <input type="text" id="address" class="form-control  textBorder" placeholder="{{usercontrolarray[0].address}}" disabled><br>
+        </div>
+        <div class="form-group">
+            <label for="email">Email Id</label>
+            <input type="email" id="email" class="form-control textBorder"placeholder="{{usercontrolarray[0].email_id}}" disabled><br>
+        </div>
+        <div class="form-group">
+            <label for="AadharCardNumber">Aadhar Card Number</label>
+            <input type="text" id="AadharCardNumber" class="form-control textBorder"placeholder="{{usercontrolarray[0].aadhar_num}}" disabled><br>
+        </div>
+        <input type="submit" class="btn btn-success" value="Activate User">
+    </form>       
+</div>
+
+
+<div *ngIf="blockUserdetail">
+    <form  (ngSubmit)="blockoperation()" class="col-sm-offset-4 col-sm-4 col-sm-4">
+        <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" id="name" class="form-control textBorder" placeholder="{{usercontrolarray[0].name}}" disabled><br>
+        </div>
+
+        <div class="form-group">
+            <label for="address">Address</label>
+            <input type="text" id="address" class="form-control  textBorder" placeholder="{{usercontrolarray[0].address}}" disabled><br>
+        </div>
+        <div class="form-group">
+            <label for="email">Email Id</label>
+            <input type="email" id="email" class="form-control textBorder"placeholder="{{usercontrolarray[0].email_id}}" disabled><br>
+        </div>
+        <div class="form-group">
+            <label for="AadharCardNumber">Aadhar Card Number</label>
+            <input type="text" id="AadharCardNumber" class="form-control textBorder"placeholder="{{usercontrolarray[0].aadhar_num}}" disabled><br>
+        </div>
+        <input type="submit" class="btn btn-danger" value="Block User">
+    </form>       
+</div>
+
+
+
+
+

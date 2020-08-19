@@ -1,0 +1,69 @@
+create database jabadadb;
+use jabadadb;
+create table authentication(sno int primary key  auto_increment,email_id varchar(70),password varchar(30),mobile_number bigint  not null unique);
+create table Product_catalog (plan_id int not null auto_increment,plan_name varchar(30),validity int,rate float,data float,talktime float, sms int,speed int,plan_type varchar(30),primary key(plan_id),plan_benefit varchar(70));
+create table Customer_details(customer_id int not null auto_increment primary key,name varchar(50),mobile_number bigint,address varchar(150),email_id varchar(70),proof longblob,aadhar_num bigint,user_status int,joining_date date);
+create table Customer_plan(customer_id int, plan_id int,plan_type varchar(30),from_date date,to_date date default null,mobile_number bigint,active_status int default 1);
+create table Query_db(query_id int not null auto_increment primary key,mobile_number bigint,query varchar(500),solution varchar(1000) default "",query_status int default 0);
+create table Bill_cycle(customer_id int,bill_no bigint,plan_type varchar(30),plan_id int,plan_name varchar(30),from_date date,to_date date,name varchar(50),mobile_number bigint,address varchar(150),email_id varchar(70),rate float,paid_status int,billdue_date date,bill_date date);
+create table Bill_details(customer_id int,bill_no bigint,bill_amount float,cycle_date date,paid_status int,billdue_date date);
+create table User_usage(mobile_number bigint not null unique,sms int,talktime float,data float);
+create table Available_numbers(mobile_number bigint not null unique,status int);
+create table offer_details(real_plan int,plan_id1 int,plan_id2 int);
+
+
+
+insert into Available_numbers values(9176230560,1);
+insert into Available_numbers values(9962194078,1);
+insert into Available_numbers values(9884800538,1);
+insert into Available_numbers values(9176098532,1);
+insert into Available_numbers values(9943237111,1);
+insert into Available_numbers values(8489614155,1);
+insert into Available_numbers values(9488129030,1);
+insert into Available_numbers values(7867051735,1);
+insert into Available_numbers values(9500140721,1);
+insert into Available_numbers values(9445145615,1);
+insert into Available_numbers values(9080434390,1);
+insert into Available_numbers values(9487842927,1);
+insert into Available_numbers values(8939368685,1);
+insert into Available_numbers values(9791057273,1);
+insert into Available_numbers values(9444677664,1);
+insert into Available_numbers values(6987456985,1);
+insert into Available_numbers values(7896547894,1);
+
+insert into offer_details values (1,5,3);
+insert into offer_details values (5,3,1);
+insert into offer_details values (3,5,1);
+insert into offer_details values (2,4,6);
+insert into offer_details values (4,2,6);
+insert into offer_details values (6,4,2);
+
+
+insert into Product_catalog (plan_name,validity,rate,data,talktime,sms,speed,plan_type,plan_benefit)values('Double Data Plan',38,275,2,100,100,4,'prepaid','extra 2 gb free');
+insert into Product_catalog (plan_name,validity,rate,data,talktime,sms,speed,plan_type,plan_benefit)values('HomePlan',0,500,4,100,100,4,'postpaid','one connection free');
+insert into Product_catalog (plan_name,validity,rate,data,talktime,sms,speed,plan_type,plan_benefit)values('WorkFromHomePlan',0,800,200,100,100,4,'broadband','Unlimited');
+insert into Product_catalog (plan_name,validity,rate,data,talktime,sms,speed,plan_type,plan_benefit)values('combo Plan',28,151,2,100,100,4,'prepaid','extra voice and sms');
+insert into Product_catalog (plan_name,validity,rate,data,talktime,sms,speed,plan_type,plan_benefit)values('Fantastic 5',0,900,3,100,100,4,'postpaid','Unlimited');
+insert into Product_catalog (plan_name,validity,rate,data,talktime,sms,speed,plan_type,plan_benefit)values('combo Plan',0,1200,200,100,100,4,'broadband','extra voice and sms');
+insert into Product_catalog (plan_name,validity,rate,data,talktime,sms,speed,plan_type,plan_benefit)values('Family Plan',28,299,3,100,100,4,'prepaid','Unlimited');
+insert into Product_catalog (plan_name,validity,rate,data,talktime,sms,speed,plan_type,plan_benefit)values('take away',0,999,4,100,100,4,'postpaid',' free International Calls');
+insert into Product_catalog (plan_name,validity,rate,data,talktime,sms,speed,plan_type,plan_benefit)values('Double Data Plan',0,1500,450,100,100,4,'broadband','Unlimited data');
+
+
+
+insert into User_usage values(9176230560,34,67,2);
+insert into User_usage values(9176230560,56,98,4);
+insert into User_usage values(9962194078,12,54,6);
+insert into User_usage values(9884800538,43,65,1);
+insert into User_usage values(9176098532,56,44,3);
+insert into User_usage values(9943237111,87,43,2);
+insert into User_usage values(8489614155,5,145,4);
+insert into User_usage values(9488129030,43,65,6);
+insert into User_usage values(7867051735,88,86,2);
+insert into User_usage values(9500140721,100,43,5);
+insert into User_usage values(9445145615,12,176,1);
+insert into User_usage values(9080434390,43,34,3);
+insert into User_usage values(9487842927,23,65,2);
+insert into User_usage values(8939368685,12,192,4);
+
+

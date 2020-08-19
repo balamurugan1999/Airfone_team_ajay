@@ -1,0 +1,1091 @@
+from random import randint
+
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+from flask_restful import Resource, Api
+from flaskext.mysql import MySQL
+import json
+import sys
+import re
+import schedule
+from flask import Flask, request, jsonify
+from flask_restful import Resource, Api
+from flaskext.mysql import MySQL
+from flask_cors import CORS,cross_origin
+import sys
+import json
+import re
+from fpdf import FPDF
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email import encoders
+from datetime import date
+
+# for scheduling bill generation daily for the curr date
+from datetime import datetime
+mysql = MySQL()
+app = Flask(__name__)
+CORS(app)
+cors=CORS(app,resources={r"/*":{
+    "origins":'http://localhost:9000',
+    "methods":['GET','POST','PUT']
+}})
+
+port = 9000
+env = "jabadadb"
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        env = sys.argv[1]
+        print("env=" + env)
+    if len(sys.argv) > 2:
+        port = sys.argv[2]
+        print("port=" + port)
+
+# SQL
+app.config['MYSQL_DATABASE_USER'] = 'root'
+app.config['MYSQL_DATABASE_PASSWORD'] = 'ajay99'
+app.config['MYSQL_DATABASE_DB'] = env
+app.config['MYSQL_DATABASE_HOST'] = 'localhost'
+
+mysql.init_app(app)
+api = Api(app)
+
+
+class SignUp(Resource):
+    def post(self):
+        data = request.get_json()
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        checkCustomer="select count(*) from Customer_details where mobile_number="+data['mobile_number']
+        cursor.execute(checkCustomer)
+        checkCustomerCount=cursor.fetchall()[0][0]
+
+        checkAlreadyRegistered = "select count(*) from authentication where mobile_number=" + data['mobile_number']
+        cursor.execute(checkAlreadyRegistered)
+        checkAlreadyRegisteredCount = cursor.fetchall()[0][0]
+
+        if checkAlreadyRegisteredCount>0:
+            response =  {'UserSignup': 'Already Registered User'}
+            return response
+        if checkCustomerCount>0:
+            SignUpUser = "insert into authentication (email_id,password,mobile_number) values ('" + str(data['email_id']) + "','" + str(data['password']) +"','"+ str(data['mobile_number'])+"')"
+            cursor.execute(SignUpUser)
+            conn.commit()
+            conn.close()
+            response = {'UserSignup': 'success'}
+            return response, 201
+        else:
+            response ={'UserSignup': 'Join Airfone'}
+            return response
+
+
+class LogIn(Resource):
+    def post(self):
+        data = request.get_json()
+        user_typed_mobile_number=str(data['mobile_number'])
+        user_typed_password=data['password']
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        auth = "select count(*) from authentication where mobile_number="+user_typed_mobile_number+ " and password ='"+user_typed_password+"'"
+        cursor.execute(auth)
+        authCount = cursor.fetchall()[0][0]
+        if authCount==1:
+            conn.close()
+            response = {'login': 'Success'}
+            return response, 201
+        else :
+            checkingUserExist = "select count(*) from authentication where mobile_number=" + user_typed_mobile_number
+            cursor.execute(checkingUserExist)
+            Count = cursor.fetchall()[0][0]
+            if Count==0:
+                conn.close()
+                response = {'login': 'User not found'}
+                return response, 201
+            else:
+                conn.close()
+                response = {'login': 'Incorrect Password'}
+                return response, 201
+
+# -------------------------------------------------------------------------------------------------------------------
+
+class Tariff(Resource):
+    def get(self):
+        data = request.get_json()
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        selectAllProduct = "select *  from Product_catalog"
+        cursor.execute(selectAllProduct)
+        TariffData = cursor.fetchall()
+        mydict = {}
+        arr = []
+        for row in TariffData:
+            arr.append({"plan_id":row[0],"plan_name": row[1], "validity": row[2], "rate": row[3],
+                        "data": row[4], "talktime": row[5], "sms": row[6],
+                        "speed": row[7], "plan_type": row[8], "plan_benefit": row[9]
+                        })
+            mydict["Plan_details"] = arr
+        conn.commit()
+        conn.close()
+        if len(TariffData) > 0:
+            return mydict,201
+        return {'User_details': None}, 404
+
+
+class CreateUserQuery(Resource):
+    def post(self):
+        data = request.get_json()
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        insertQuery = "insert into Query_db (mobile_number,query) values("+str(data['mobile_number'])+",'"+str(data['query'])+"')"
+        print(insertQuery)
+        cursor.execute(insertQuery)
+        conn.commit()
+        conn.close()
+        response = {'Status': 'Query Inserted'}
+        return response, 201
+
+
+class GetUserQuery(Resource):
+    def get(self,mobile_number):
+        #data = request.get_json()
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        getQuery = "select *  from query_db where mobile_number="+str(mobile_number)+" and query_status=0"
+        cursor.execute(getQuery)
+        getQueryDetails = cursor.fetchall()
+        mydict = {}
+        arr = []
+        for row in getQueryDetails:
+            arr.append({"query_id":row[0],"query": row[2], "solution": row[3], "query_status": row[4]})
+            mydict["Query_details"] = arr
+        conn.commit()
+        conn.close()
+        if len(getQueryDetails) > 0:
+            return mydict,201
+        return {'Query_details': None}, 404
+
+
+
+class UpdateUserQuery(Resource):
+    def put(self):
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        data = request.get_json()
+        updateuserquery = "update query_db set query_status=1 where query_id =" + str(data['query_id'])
+        cursor.execute(updateuserquery)
+        conn.commit()
+        conn.close()
+        return {'Status': "QueryStatus Updated"}, 201
+
+# -------------------------------------------------------------------------------------------------------------------
+
+class AdminCreatePlan(Resource):
+    def post(self):
+        data = request.get_json()
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        NewPlan = "insert into Product_catalog(plan_name,validity,rate,data,talktime,sms,speed,plan_type,plan_benefit) values(%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        cursor.execute(NewPlan,[data['plan_name'],data['validity'],data['rate'],data['data'],data['talktime'],data['sms'],data['speed'],data['plan_type'],data['plan_benefit']])
+        conn.commit()
+        conn.close()
+        response = {'NewPlan': 'Created'}
+        return response, 201
+
+# admin editing plan
+class AdminEditPlan(Resource):
+    def get(self):
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        SelectAllPlans = "select plan_name from Product_catalog"
+        cursor.execute(SelectAllPlans)
+        AllPlans = cursor.fetchall()
+        mydict = {}
+        arr = []
+        for row in AllPlans:
+            arr.append({"plan_name":row[0]})
+            mydict["plan_name"] = arr
+        conn.commit()
+        conn.close()
+        if len(AllPlans) > 0:
+            return mydict,201
+        return {'plan_name': None}, 404
+
+    def post(self):
+        data = request.get_json()
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        # EditPlan="update Product_catalog set validity="+str(data['validity'])+",rate="+str(data['rate'])+",data="+str(data['data'])+",talktime="+str(data['talktime'])+",sms="+str(data['sms'])+",speed="+str(data['speed'])+",plan_type='"+data['plan_type']+"',plan_benefit='"+data['plan_benefit']+"' where plan_name='"+data['plan_name']+"'"
+        EditPlan="update Product_catalog set validity=%s,rate=%s,data=%s,talktime=%s,sms=%s,speed=%s,plan_type=%s,plan_benefit=%s where plan_name=%s"
+
+        cursor.execute(EditPlan,[data['validity'],data['rate'],data['data'],data['talktime'],data['sms'],data['speed'],data['plan_type'],data['plan_benefit'],data['plan_name'],])
+        conn.commit()
+        conn.close()
+        response = {'EditPlan': 'Edited'}
+        return response, 201
+
+
+# admin new query from user
+class AdminNewQuery(Resource):
+    def get(self):
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        SelectUserQuery = "select mobile_number,query,query_id from Query_db where query_status=0  and solution=''"
+        cursor.execute(SelectUserQuery)
+        UserQuery = cursor.fetchall()
+        mydict = {}
+        arr = []
+        for row in UserQuery:
+            arr.append({"mobile_number":row[0],"query":row[1],"query_id":row[2]})
+            mydict["UserQuery"] = arr
+        conn.commit()
+        conn.close()
+        if len(SelectUserQuery) > 0:
+            return mydict,201
+        return {'UserQuery': None}, 404
+    def post(self):
+        data = request.get_json()
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        AdminSolution="update  Query_db set solution ='"+data['solution']+"' where query_id="+str(data['query_id']) +" and solution=''"
+        cursor.execute(AdminSolution)
+        conn.commit()
+        conn.close()
+        response = {'AdminSolution': 'Answered'}
+        return response, 201
+
+#admin raised query from user
+class AdminRaisedQuery(Resource):
+    def get(self):
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        SelectRaisedQuery = "select mobile_number,query,solution,query_id from Query_db where solution!='' and query_status=0"
+        cursor.execute(SelectRaisedQuery)
+        RaisedQuery = cursor.fetchall()
+        mydict = {}
+        arr = []
+        for row in RaisedQuery:
+            arr.append({"mobile_number":row[0],"query":row[1],"solution":row[2],"query_id":row[3]})
+            mydict["RaisedQuery"] = arr
+        conn.commit()
+        conn.close()
+        if len(SelectRaisedQuery) > 0:
+            return mydict,201
+        return {'RaisedQuery': None}, 404
+    def post(self):
+        data = request.get_json()
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        AdminRaisedQuerySolution="update  Query_db set solution ='"+data['solution']+"' where query_id ="+str(data['query_id'])
+        print(AdminRaisedQuerySolution)
+        cursor.execute(AdminRaisedQuerySolution)
+        conn.commit()
+        conn.close()
+        response = {'AdminRaisedQuerySolution': 'Answered'}
+        return response
+
+
+class AdminUserControl(Resource):
+    def get(self,mobile_number):
+        conn = mysql.connect()
+        data = request.get_json()
+        cursor = conn.cursor()
+        activeUsers = "select name,address,email_id,aadhar_num from Customer_details where  mobile_number="+str(mobile_number)
+        cursor.execute(activeUsers)
+        activeUserDetails = cursor.fetchall()
+        mydict = {}
+        arr = []
+        for row in activeUserDetails:
+            arr.append({"name":row[0],"address":row[1],"email_id":row[2],"aadhar_num":row[3]})
+            mydict["UserControlDetails"] = arr
+        conn.commit()
+        conn.close()
+        if len(activeUserDetails) > 0:
+            return mydict,201
+        return {'UserControlDetails': None}, 404
+    def post(self,mobile_number):
+        data = request.get_json()
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        UpdateUserStatus="update  Customer_details set user_status ="+str(data['choice'])+" where mobile_number ="+str(mobile_number)
+
+        cursor.execute(UpdateUserStatus)
+        conn.commit()
+        conn.close()
+        response = {'UpdateUserStatus': 'Updated'}
+        return response
+
+
+
+
+# ________________________________________________________________________________________
+
+def convertToBinaryData(filename):
+    # Convert digital data to binary format
+    with open(filename, 'rb') as file:
+        binaryData = file.read()
+    return binaryData
+
+
+class NewConnection(Resource):
+    def post(self):
+        data = request.get_json()
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        getuniqueMobileNumber = "select mobile_number from Available_numbers where status =1 limit 1"
+        cursor.execute(getuniqueMobileNumber)
+        uniqueNumber = cursor.fetchall()[0][0]
+        updateStatusInMobileDB="update Available_numbers set status=0 where mobile_number="+str(uniqueNumber)
+        cursor.execute(updateStatusInMobileDB)
+        conn.commit()
+        # AadharProof = convertToBinaryData(data['proof'])
+        # NewConnection="insert into Customer_details(name,mobile_number,address,email_id,proof,aadhar_num,user_status,joining_date) values('"+data['name']+"',"+str(uniqueNumber)+",'"+data['address']+"','"+data['email_id']+"',"+str(AadharProof)+","+str(data['aadhar_num'])+",1,curdate())"
+        NewConnection = "insert into Customer_details (name,mobile_number ,address ,email_id ,aadhar_num ,user_status,joining_date) values (%s,%s,%s,%s,%s,%s,curdate())"
+
+        cursor.execute(NewConnection,[data['name'],uniqueNumber,data['address'],data['email_id'],data['aadhar_num'],1])
+
+        conn.commit()
+
+        # insertingIntoCustomerPlan="insert into Customer_plan (customer_id,plan_id,plan_type,from_date,mobile_number) select customer_id,"+str(data['plan_id'])+",'"+data['plan_type']+"',curdate(),mobile_number from customer_details where mobile_number="+str(uniqueNumber)
+        # cursor.execute(insertingIntoCustomerPlan)
+        # conn.commit()
+        insertingIntoCustomerPlan = "insert into Customer_plan (customer_id,plan_id,plan_type,from_date,mobile_number) select customer_id,%s,%s,curdate(),mobile_number from customer_details where mobile_number=%s"
+        cursor.execute(insertingIntoCustomerPlan,[data['plan_id'],data['plan_type'],uniqueNumber])
+        conn.commit()
+        getmailid = "select email_id from  Customer_details where mobile_number="+str(uniqueNumber)
+        cursor.execute(getmailid)
+        emailidofuser = cursor.fetchall()[0][0]
+
+        msg = MIMEMultipart()
+        msg['From'] = 'AirfoneJabada@gmail.com'
+        msg['To'] = emailidofuser
+        msg['Subject'] = "Regarding Your New Connection"
+        body = '''
+          Hi User,
+
+          Welcome to Airfone.
+          Your Mobile Number is '''+str(uniqueNumber)+'''
+
+          Thank you for connecting with us.We hope you enjoy our services.
+          If you have any queries or concerns, you can also call us on 200.
+
+          Thanks & Regards,  
+          jabada team.
+          '''
+        msg.attach(MIMEText(body, 'plain'))
+        s = smtplib.SMTP('smtp.gmail.com', 587)
+        s.starttls()
+        # Authentication of the server mail
+        fromaddr = "AirfoneJabada@gmail.com"
+        receive_mail = emailidofuser
+        s.login(fromaddr, "jabadaairfone")
+        text = msg.as_string()
+        s.sendmail(fromaddr, receive_mail, text)
+        print("email sent")
+        s.quit()
+
+
+
+
+        conn.close()
+        return {'New Connection Status': "Success"}, 200
+
+
+
+class ChangePlan(Resource):
+
+    def post(self):
+        data = request.get_json()
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        updateStatus = "update Customer_plan set to_date=curdate() , active_status=0 where mobile_number=%s"
+        cursor.execute(updateStatus,[data['mobile_number']])
+        conn.commit()
+        NewPlan = "insert into Customer_plan (customer_id,plan_id,plan_type,from_date,mobile_number,active_status) select customer_id,%s,%s,curdate(),%s,1 from Customer_details where mobile_number=%s"
+        cursor.execute(NewPlan,[data['plan_id'],data['plan_type'],data['mobile_number'],data['mobile_number']])
+        conn.commit()
+        conn.close()
+        return {'Change Plan': "Success"}, 200
+
+
+
+class BillGenerate(Resource):
+
+    def post(self):
+        data = request.get_json()
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        updateBillCycle = "insert into bill_cycle (customer_id,bill_no,plan_type,plan_id,plan_name,from_date,to_date,name,mobile_number,address,email_id,rate,paid_status,billdue_date,bill_date) select cp.customer_id,concat(DATE_FORMAT(curdate(), '%Y%m%d'),cp.customer_id),pc.plan_type,pc.plan_id,pc.plan_name,curdate(),ADDDATE(from_date,INTERVAL 1 MONTH),cd.name,cp.mobile_number,cd.address,cd.email_id,pc.rate,0,ADDDATE(from_date,INTERVAL 20 DAY),curdate() from Customer_plan cp,Product_catalog pc,Customer_details cd where from_date=curdate() and cp.plan_id=pc.plan_id and cp.mobile_number=cd.mobile_number"
+        cursor.execute(updateBillCycle)
+        conn.commit()
+        updateBillDetails = "insert into Bill_details(customer_id,bill_no,bill_amount,cycle_date,paid_status,billdue_date)select customer_id,bill_no,sum(rate),curdate(),paid_status,billdue_date  from bill_cycle where from_date=curdate() group by customer_id;"
+        cursor.execute(updateBillDetails)
+        conn.commit()
+
+        gettingbasicDetails="select customer_id,email_id,mobile_number from bill_cycle where from_date=curdate()"
+        cursor.execute(gettingbasicDetails)
+        rows=cursor.fetchall()
+        for row in rows:
+            cus_id = row[0]
+            receive_mail = row[1]
+            mob_number = row[2]
+            print(mob_number)
+            searchUserQuery = "select * from bill_cycle where mobile_number = %s and bill_date=curdate()"
+            cursor.execute(searchUserQuery, [mob_number])
+            rowsofBill = cursor.fetchall()
+            print(rowsofBill)
+            for rowBill in rowsofBill:
+                pdf = FPDF()
+                pdf.add_page()
+                page_width = pdf.w - 2 * pdf.l_margin
+                pdf.set_font('Times', 'B', 17.0)
+                pdf.cell(page_width, 0.0, 'Airfone ', align='C')
+                pdf.ln(8)
+                pdf.set_font('Times', 'B', 14.0)
+                pdf.cell(page_width, 0.0, 'Bill Information ', align='C')
+                pdf.ln(10)
+                pdf.set_font('Courier', '', 12)
+                col_width = page_width / 3
+                pdf.ln(2)
+                th = 7
+                print(rowBill)
+                pdf.set_font('Courier', 'B', 12)
+                pdf.cell(col_width, th, 'Customer Id ', border=0)  # cus id
+                pdf.set_font('Courier', '', 12)
+                pdf.cell(col_width, th, str(rowBill[0]), border=0)  # cus id
+                pdf.ln(th)
+                pdf.set_font('Courier', 'B', 12)
+                pdf.cell(col_width, th, 'Bill Number ', border=0)  # bill no
+                pdf.set_font('Courier', '', 12)
+                pdf.cell(col_width, th, str(rowBill[1]), border=0)  # bill no
+                pdf.ln(th)
+                pdf.set_font('Courier', 'B', 12)
+                pdf.cell(col_width, th, 'Plan Type ', border=0)  # plan_type
+                pdf.set_font('Courier', '', 12)
+                pdf.cell(col_width, th, str(rowBill[2]), border=0)  # plan_type
+                pdf.ln(th)
+                pdf.set_font('Courier', 'B', 12)
+                pdf.cell(col_width, th, 'Plan Id', border=0)  # plan id
+                pdf.set_font('Courier', '', 12)
+                pdf.cell(col_width, th, str(rowBill[3]), border=0)  # plan id
+                pdf.ln(th)
+                pdf.set_font('Courier', 'B', 12)
+                pdf.cell(col_width, th, 'Plan Name ', border=0)  # plan_name
+                pdf.set_font('Courier', '', 12)
+                pdf.cell(col_width, th, str(rowBill[4]), border=0)  # plan_name
+                pdf.ln(th)
+                pdf.set_font('Courier', 'B', 12)
+                pdf.cell(col_width, th, 'From date', border=0)  # from_date
+                pdf.set_font('Courier', '', 12)
+                pdf.cell(col_width, th, str(rowBill[5]), border=0)  # from_date
+                pdf.ln(th)
+                pdf.set_font('Courier', 'B', 12)
+                pdf.cell(col_width, th, 'To Date ', border=0)  # to_date
+                pdf.set_font('Courier', '', 12)
+                pdf.cell(col_width, th, str(rowBill[6]), border=0)  # to_date
+                pdf.ln(th)
+                pdf.set_font('Courier', 'B', 12)
+                pdf.cell(col_width, th, 'Customer Name ', border=0)  # name
+                pdf.set_font('Courier', '', 12)
+                pdf.cell(col_width, th, str(rowBill[7]), border=0)  # name
+                pdf.ln(th)
+                pdf.set_font('Courier', 'B', 12)
+                pdf.cell(col_width, th, 'Mobile Number ', border=0)  # mobile_number
+                pdf.set_font('Courier', '', 12)
+                pdf.cell(col_width, th, str(rowBill[8]), border=0)  # mobile_number
+                pdf.ln(th)
+                pdf.set_font('Courier', 'B', 12)
+                pdf.cell(col_width, th, 'Address ', border=0)  # address
+                pdf.set_font('Courier', '', 12)
+                pdf.cell(col_width, th, str(rowBill[9]), border=0)  # address
+                pdf.ln(th)
+                pdf.set_font('Courier', 'B', 12)
+                pdf.cell(col_width, th, 'Email-ID', border=0)  # email_id
+                pdf.set_font('Courier', '', 12)
+                pdf.cell(col_width, th, str(rowBill[10]), border=0)  # email_id
+                pdf.ln(th)
+                pdf.set_font('Courier', 'B', 12)
+                pdf.cell(col_width, th, 'Today date', border=0)  # cur_date
+                pdf.set_font('Courier', '', 12)
+                pdf.cell(col_width, th, str(rowBill[11]), border=0)  # cur_date
+                pdf.ln(th)
+                pdf.set_font('Courier', 'B', 12)
+                pdf.cell(col_width, th, 'Amount ', border=0)  # rate
+                pdf.set_font('Courier', '', 12)
+                pdf.cell(col_width, th, str(rowBill[12]), border=0)  # rate
+                pdf.ln(th)
+                pdf.set_font('Courier', 'B', 12)
+                pdf.cell(col_width, th, 'Paid Status ', border=0)  # paid_status
+                pdf.set_font('Courier', '', 12)
+                pdf.cell(col_width, th, str(rowBill[13]), border=0)  # paid_status
+                pdf.ln(th)
+                pdf.set_font('Courier', 'B', 12)
+                pdf.cell(col_width, th, 'Due Date', border=0)  ##bill_due date
+                pdf.set_font('Courier', '', 12)
+                pdf.cell(col_width, th, str(rowBill[14]), border=0)  # bill_duedate
+                pdf.ln(th)
+                filenames = "C://Users/Ajay/Desktop/Prodapt/IPRIMED/PROJECT/pdfgeneration/BillDetails.pdf"
+                pdf.output(filenames)
+            filename = "BillDetails.pdf"
+            path = "C://Users/Ajay/Desktop/Prodapt/IPRIMED/PROJECT/pdfgeneration/BillDetails.pdf"
+            msg = MIMEMultipart()
+            msg['From'] = 'AirfoneJabada@gmail.com'
+            msg['To'] = receive_mail
+            msg['Subject'] = "Bill Details"
+            body = '''Dear Airfone customer,
+           This is from Airfone mail.
+           In this mail we are sending bill attachments.
+           If you have any queries or concerns, you can also call us on 200.
+
+           Thanks & Regards,
+           jabada team.
+           '''
+            msg.attach(MIMEText(body, 'plain'))
+            s = smtplib.SMTP('smtp.gmail.com', 587)
+            s.starttls()
+            # Authentication of the server mail
+            fromaddr = "AirfoneJabada@gmail.com"
+            toaddr = receive_mail
+            s.login(fromaddr, "jabadaairfone")
+            text = msg.as_string()
+            # with attachment condition
+            if (filename and path):
+                attachment = open(path, "rb")
+                p = MIMEBase('application', 'octet-stream')
+                p.set_payload((attachment).read())
+                encoders.encode_base64(p)
+                p.add_header('Content-Disposition', "attachment; filename= %s" % filename)
+                msg.attach(p)
+                text = msg.as_string()
+            s.sendmail(fromaddr, receive_mail, text)
+            print("email sent")
+            s.quit()
+        conn.close()
+        return {'Generate Bill': "Success"}, 200
+
+class UserUsage(Resource):
+
+    def post(self,mobile_number):
+        data = request.get_json()
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        UpdatingRealTimeUserUsage = "update User_usage set sms=%s,talktime=%s,data=%s where mobile_number=%s "
+        cursor.execute(UpdatingRealTimeUserUsage,[data['sms'],data['talktime'],data['data'],mobile_number])
+        conn.commit()
+        conn.close()
+        return {' Update Usage': "Success"}, 200
+
+    def get(self,mobile_number):
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        FetchingUserUsage = "select * from User_usage where mobile_number=%s"
+        cursor.execute(FetchingUserUsage,mobile_number)
+        UserUsage = cursor.fetchall()
+        mydict = {}
+        arr = []
+        for row in UserUsage:
+            arr.append({"sms":row[1],"talktime":row[2],"data":row[3]})
+            mydict["UserUsage"] = arr
+        conn.commit()
+        conn.close()
+        if len(UserUsage) > 0:
+            return mydict,201
+        return {'UserUsage': None}, 404
+
+
+
+class PlanType(Resource):
+
+    def get(self,mobile_number):
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        FetchingPlanType = "select plan_type from Customer_plan where mobile_number=%s and active_status=1"
+        cursor.execute(FetchingPlanType,mobile_number)
+        PlantType = cursor.fetchall()
+        mydict = {}
+        arr = []
+        for row in PlantType:
+            arr.append({"plan_type":row[0]})
+            mydict["PlantType"] = arr
+        conn.commit()
+        conn.close()
+        if len(PlantType) > 0:
+            return mydict,201
+        return {'PlantType': None}, 404
+
+
+class UserPlanHistory(Resource):
+    def post(self,from_date,to_date,mobile_number):
+        # data = request.get_json()
+        conn = mysql.connect()
+        cursor = conn.cursor()
+
+        getemail="select email_id from Customer_details where mobile_number="+str(mobile_number)
+        cursor.execute(getemail)
+        emailid = cursor.fetchall()[0][0]
+
+        getUserPlanHistory = 'select cd.name, cp.plan_id, cp.plan_type, cp.from_date, cp.to_date, cp.mobile_number, pc.rate, pc.plan_name, pc.validity from Customer_plan as cp, Product_catalog as pc, Customer_details cd where from_date between  ' + '"' + str(
+            from_date) + '" and "' + str(to_date) + '" and cp.mobile_number=' + str(
+            mobile_number) + ' and cp.plan_id = pc.plan_id and cp.mobile_number = cd.mobile_number'
+        print(getUserPlanHistory)
+        cursor.execute(getUserPlanHistory)
+        historydetails = cursor.fetchall()
+        mydict = {}
+        arr = []
+
+        # for row in historydetails:
+        #     arr.append({"name": row[0], "plan_id": row[1], "plan_type": row[2], "from_date": str(row[3]),
+        #                 "to_date": str(row[4]), "mobile_number": row[5], "rate": row[6], "plan_name": row[7],
+        #                 "validity": row[8]
+        #                 })
+        #     mydict["customer_details"] = arr
+        # conn.commit()
+        # conn.close()
+        # if len(historydetails) > 0:
+        #     return mydict, 201
+        # return {'history_details': None}, 404
+
+        pdf = FPDF()
+        pdf.add_page()
+        page_width = pdf.w - 2 * pdf.l_margin
+        pdf.set_font('Times', 'B', 17.0)
+        pdf.cell(page_width, 0.0, 'Airfone ', align='C')
+        pdf.ln(8)
+        pdf.set_font('Times', 'B', 14.0)
+        pdf.cell(page_width, 0.0, 'Plan Information ', align='C')
+        pdf.ln(10)
+        pdf.set_font('Courier', '', 12)
+        col_width = page_width / 3
+        pdf.ln(2)
+        th = 7
+
+        pdf.set_font('Courier', 'B', 12)
+        pdf.cell(col_width, th, 'Name ', border=0)  # cus id
+        pdf.set_font('Courier', '', 12)
+        pdf.cell(col_width, th, str(historydetails[0][0]), border=0)  # cus id
+        pdf.ln(th)
+        pdf.set_font('Courier', 'B', 12)
+        pdf.cell(col_width, th, 'Plan ID ', border=0)  # bill no
+        pdf.set_font('Courier', '', 12)
+        pdf.cell(col_width, th, str(historydetails[0][1]), border=0)  # bill no
+        pdf.ln(th)
+        pdf.set_font('Courier', 'B', 12)
+        pdf.cell(col_width, th, 'Plan Type ', border=0)  # plan_type
+        pdf.set_font('Courier', '', 12)
+        pdf.cell(col_width, th, str(historydetails[0][2]), border=0)  # plan_type
+        pdf.ln(th)
+        pdf.set_font('Courier', 'B', 12)
+        pdf.cell(col_width, th, 'From Date', border=0)  # plan id
+        pdf.set_font('Courier', '', 12)
+        pdf.cell(col_width, th, str(historydetails[0][3]), border=0)  # plan id
+        pdf.ln(th)
+        pdf.set_font('Courier', 'B', 12)
+        pdf.cell(col_width, th, 'To Date ', border=0)  # plan_name
+        pdf.set_font('Courier', '', 12)
+        pdf.cell(col_width, th, str(historydetails[0][4]), border=0)  # plan_name
+        pdf.ln(th)
+        pdf.set_font('Courier', 'B', 12)
+        pdf.cell(col_width, th, 'Mobile Number', border=0)  # from_date
+        pdf.set_font('Courier', '', 12)
+        pdf.cell(col_width, th, str(historydetails[0][5]), border=0)  # from_date
+        pdf.ln(th)
+        pdf.set_font('Courier', 'B', 12)
+        pdf.cell(col_width, th, 'Amount ', border=0)  # to_date
+        pdf.set_font('Courier', '', 12)
+        pdf.cell(col_width, th, str(historydetails[0][6]), border=0)  # to_date
+        pdf.ln(th)
+        pdf.set_font('Courier', 'B', 12)
+        pdf.cell(col_width, th, 'Plan Name ', border=0)  # name
+        pdf.set_font('Courier', '', 12)
+        pdf.cell(col_width, th, str(historydetails[0][7]), border=0)  # name
+        pdf.ln(th)
+        filenames = "C://Users/Ajay/Desktop/Prodapt/IPRIMED/PROJECT/pdfgeneration/PlanDetails.pdf"
+        pdf.output(filenames)
+
+        filename = "PlanDetails.pdf"
+        path = "C://Users/Ajay/Desktop/Prodapt/IPRIMED/PROJECT/pdfgeneration/PlanDetails.pdf"
+        msg = MIMEMultipart()
+        msg['From'] = 'AirfoneJabada@gmail.com'
+        msg['To'] = emailid
+        msg['Subject'] = "Your  Plan Details"
+        body = '''Dear Airfone customer,
+                       This is from Airfone mail.
+                       In this mail we are sending your plan history.
+                       If you have any queries or concerns, you can also call us on 200.
+    
+                       Thanks & Regards,
+                       jabada team.
+                       '''
+        msg.attach(MIMEText(body, 'plain'))
+        s = smtplib.SMTP('smtp.gmail.com', 587)
+        s.starttls()
+        # Authentication of the server mail
+        fromaddr = "AirfoneJabada@gmail.com"
+        toaddr = emailid
+        s.login(fromaddr, "jabadaairfone")
+        text = msg.as_string()
+        # with attachment condition
+        if (filename and path):
+            attachment = open(path, "rb")
+            p = MIMEBase('application', 'octet-stream')
+            p.set_payload((attachment).read())
+            encoders.encode_base64(p)
+            p.add_header('Content-Disposition', "attachment; filename= %s" % filename)
+            msg.attach(p)
+            text = msg.as_string()
+        s.sendmail(fromaddr, emailid, text)
+        print("email sent")
+        s.quit()
+
+
+
+
+
+
+
+
+
+
+class GetOutstandingAmountForUserUI(Resource):
+
+    def get(self,mobile_number):
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        FetchingOutsandingAmount = "select bill_no,bill_amount from Bill_details as BD,Customer_details as CD where CD.customer_id=BD.customer_id and CD.mobile_number=%s and paid_status=0"
+        cursor.execute(FetchingOutsandingAmount,mobile_number)
+        OutStandingAmount = cursor.fetchall()
+        mydict = {}
+        arr = []
+        for row in OutStandingAmount:
+            arr.append({"bill_no":row[0],"bill_amount":row[1]})
+            mydict["OutStandingAmount"] = arr
+        conn.commit()
+        conn.close()
+        if len(OutStandingAmount) > 0:
+            return mydict,201
+        return {'OutStandingAmount': None}, 404
+
+
+class UpdatePayStatus(Resource):
+    def post(self):
+        data = request.get_json()
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        UpdatePayStatusInBillCyle = "update Bill_cycle set paid_status=1 where bill_no=%s"
+        cursor.execute(UpdatePayStatusInBillCyle,[data['bill_no']])
+        conn.commit()
+        UpdatePayStatusInBillDetails="update Bill_details set paid_status=1 where bill_no=%s"
+        cursor.execute(UpdatePayStatusInBillDetails, [data['bill_no']])
+        conn.commit()
+
+        query="select email_id from Customer_details cd,Bill_details bd where cd.customer_id=bd.customer_id and bill_no="+str(data['bill_no'])
+        cursor.execute(query)
+        mailid=cursor.fetchall()[0][0]
+
+
+        msg = MIMEMultipart()
+        msg['From'] = 'AirfoneJabada@gmail.com'
+        msg['To'] = mailid
+        msg['Subject'] = "Payment Details"
+        body = '''
+          Dear Airfone customer,
+
+          Your Payment was Successful.
+
+          Thank you for connecting with us.We hope you enjoy our services.
+          If you have any queries or concerns, you can also call us on 200.
+
+          Thanks & Regards,  
+          jabada team.
+          '''
+        msg.attach(MIMEText(body, 'plain'))
+        s = smtplib.SMTP('smtp.gmail.com', 587)
+        s.starttls()
+        # Authentication of the server mail
+        fromaddr = "AirfoneJabada@gmail.com"
+        receive_mail = mailid
+        s.login(fromaddr, "jabadaairfone")
+        text = msg.as_string()
+        s.sendmail(fromaddr, receive_mail, text)
+        print("email sent")
+        s.quit()
+
+
+
+        conn.close()
+        return {' PayStatus': "Success"}, 200
+
+class UserDetails(Resource):
+
+    def get(self,mobile_number):
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        GetUserDetails = "select name,mobile_number,address from Customer_details where mobile_number=%s"
+        cursor.execute(GetUserDetails,mobile_number)
+        UserDetailsForGreeting = cursor.fetchall()
+        mydict = {}
+        arr = []
+        for row in UserDetailsForGreeting:
+            arr.append({"name":row[0],"mobile_number":row[1],"address":row[2]})
+            mydict["UserDetails"] = arr
+        conn.commit()
+        conn.close()
+        if len(UserDetailsForGreeting) > 0:
+            return mydict,201
+        return {'OutStandingAmount': None}, 404
+
+
+class getUniqueOffers(Resource):
+
+    def get(self,mobile_number):
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        FilterOffer = "select plan_id1,plan_id2 from  offer_details od,customer_plan cp where  cp.mobile_number=%s and cp.plan_id=od.real_plan"
+        cursor.execute(FilterOffer,mobile_number)
+        UserOffer = cursor.fetchall()
+        mydict = {}
+        arr = []
+        for row in UserOffer:
+           plan_id1=row[0]
+           plan_id2=row[1]
+
+        print(plan_id1)
+        print(plan_id2)
+        FetchOffer="select * from Product_catalog where plan_id=%s or plan_id=%s"
+        cursor.execute(FetchOffer, [plan_id1,plan_id2])
+        UserOfferDetails = cursor.fetchall()
+        for row in UserOfferDetails:
+            arr.append({"plan_name":row[0],"validity":row[1],"rate":row[2],"data":row[3],"talktime":row[4],"sms":row[5],"speed":row[6],"plan_benefit":row[8]})
+            mydict["UserOffer"] = arr
+        conn.commit()
+        conn.close()
+        if len(FetchOffer) > 0:
+            return mydict,201
+        return {'Offer details': None}, 404
+
+
+
+class AdminHistory(Resource):
+    def get(self,mobile_number):
+        data = request.get_json()
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        getUserHistory = "select cd.customer_id,bill_no,bill_amount,concat(cycle_date,ADDDATE(cycle_date,INTERVAL 1 MONTH)),paid_status,billdue_date,name from bill_details bd,customer_details cd where bd.customer_id =( select customer_id from Customer_details where mobile_number="+str(mobile_number)+")"
+        cursor.execute(getUserHistory)
+        UserHistory = cursor.fetchall()
+        mydict = {}
+        arr = []
+        for row in UserHistory:
+            arr.append({"customer_id":row[0],"bill_no":row[1],"bill_amount":row[2],"cycle_date":str(row[3]),"paid_status":row[4],"billdue_date":str(row[5]),"name":row[6]})
+            mydict["AdminHistory"] = arr
+        conn.commit()
+        conn.close()
+        if len(UserHistory) > 0:
+            return mydict,201
+        return {'UserHistory': None}, 404
+
+
+class  BillReminder(Resource):
+    def post(self):
+        data = request.get_json()
+        conn = mysql.connect()
+        cursor = conn.cursor()
+        getemaillist = "select  cd.email_id from bill_details bd,Customer_details cd where billdue_date=curdate()+5 and paid_status=0 and bd.customer_id=cd.customer_id"
+        cursor.execute(getemaillist)
+        emailList = cursor.fetchall()
+        for row in emailList:
+            emailId = row[0]
+            pdf = FPDF()
+            pdf.add_page()
+            page_width = pdf.w - 2 * pdf.l_margin
+            pdf.set_font('Times', 'BU', 17.0)
+            pdf.cell(page_width, 0.0, 'BILLING LETTER', align='C')
+            pdf.ln(8)
+            pdf.set_font('Times', 'BU', 14.0)
+            pdf.cell(page_width, 0.0, 'Payment Remainder ', align='C')
+            pdf.ln(8)
+            today = date.today().isoformat()
+            dat = 'Date : ' + today
+            pdf.set_font('Times', 'BU', 14.0)
+            pdf.cell(page_width, 0.0, dat, align='L')
+            col_width = page_width
+            pdf.ln(10)
+            th = 7
+            pdf.set_font('Times', 'B', 12)
+            pdf.cell(col_width, th, 'Dear AirFone Customer,', border=0)
+            pdf.set_font('Times', '', 12)
+            pdf.ln(10)
+
+            pdf.cell(col_width, th,
+                     'Only 5 days are remaining for your payment to be done. So you are requested to pay all the bills on or',
+                     border=0)
+            pdf.ln(th)
+            pdf.cell(col_width, th,
+                     'before due date. If you have already completed your payment,please disregard this notice. ',
+                     border=0)
+            pdf.ln(th)
+            pdf.cell(col_width, th, 'Thank you for using our network services, Be connected with us always.', border=0)
+            pdf.ln(th)
+            pdf.cell(col_width, th, '', border=0)
+            pdf.ln(15)
+            pdf.cell(col_width, th, 'Thanks & Regards, ', border=0)
+            pdf.ln(10)
+            pdf.cell(col_width, th, "AirFone's Jabada team.", border=0)
+            pdf.ln(th)
+            filenames = "C://Users/Ajay/Desktop/Prodapt/IPRIMED/PROJECT/pdfgeneration/BillRemainder.pdf"
+
+            pdf.output(filenames)
+            filename = "BillRemainder.pdf"
+            path = "C://Users/Ajay/Desktop/Prodapt/IPRIMED/PROJECT/pdfgeneration/BillRemainder.pdf"
+            msg = MIMEMultipart()
+            msg['From'] = 'AirfoneJabada@gmail.com'
+            msg['To'] = emailId
+            msg['Subject'] = "Bill Remainder"
+            body = '''Dear Airfone customer,
+              This is from Airfone mail.
+              In this mail we are sending bill remainder attachments.
+
+              If you have any queries or concerns, you can also call us on 200
+              Thanks & Regards,  
+              jabada team.
+              '''
+            msg.attach(MIMEText(body, 'plain'))
+            s = smtplib.SMTP('smtp.gmail.com', 587)
+            s.starttls()
+            # Authentication of the server mail
+            fromaddr = "AirfoneJabada@gmail.com"
+            receive_mail = emailId
+            s.login(fromaddr, "jabadaairfone")
+            text = msg.as_string()
+            # with attachment condition
+            if (filename and path):
+                attachment = open(path, "rb")
+                p = MIMEBase('application', 'octet-stream')
+                p.set_payload((attachment).read())
+                encoders.encode_base64(p)
+                p.add_header('Content-Disposition', "attachment; filename= %s" % filename)
+                msg.attach(p)
+                text = msg.as_string()
+            s.sendmail(fromaddr, receive_mail, text)
+            print("email sent")
+            s.quit()
+        conn.close()
+        return {'UserHistory': "Success"}, 200
+
+
+
+
+
+
+
+
+
+# ________________________________________________________________________________________
+
+
+
+
+
+
+
+
+
+
+
+
+# -------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+#____________________________________________________________________________________________________________________________
+
+# api for signup
+api.add_resource(SignUp,'/signup')
+# api for login
+api.add_resource(LogIn,'/login')
+# api for fetching tariff details
+
+# ____________________________________________________________________________________________________________________________
+api.add_resource(Tariff,'/getPlanDetails')
+
+# api for  getting user queries
+api.add_resource(GetUserQuery,'/getUserQuery/<int:mobile_number>')
+
+api.add_resource(UpdateUserQuery,'/updateUserQuery')
+
+api.add_resource(CreateUserQuery,'/insertQuery')
+
+
+# ____________________________________________________________________________________________________________________________
+
+# api for creating new plan in admin portal
+api.add_resource(AdminCreatePlan,'/CreatePlan')
+# api for editing new plan in admin portal
+api.add_resource(AdminEditPlan,'/EditPlan')
+
+# api for answering  new customer query
+api.add_resource(AdminNewQuery,'/NewQuery')
+
+# api for answering raised customer query
+api.add_resource(AdminRaisedQuery,'/RaisedQuery')
+
+# api for usercontrol in admin
+api.add_resource(AdminUserControl,'/UserControl/<int:mobile_number>')
+
+# api for admin to check user billing status
+api.add_resource(AdminHistory,'/AdminHistory/<int:mobile_number>')
+
+
+# ____________________________________________________________________
+
+# api for inserting Newuser
+api.add_resource(NewConnection,'/newConnection')
+
+# api for changing customer plan
+api.add_resource(ChangePlan,'/changePlan')
+
+# api for updating bill generator
+api.add_resource(BillGenerate,'/billGenerate')
+
+# api for fecthing user usage from db
+api.add_resource(UserUsage,'/userUsage/<string:mobile_number>')
+
+# api for fecthing plan type from db
+api.add_resource(PlanType,'/planType/<string:mobile_number>')
+
+# api for fecthing outstanding amount from db
+api.add_resource(GetOutstandingAmountForUserUI,'/outStandingAmount/<string:mobile_number>')
+
+# api for getting user plan history
+api.add_resource(UserPlanHistory,'/getUserPlanHistory/<string:from_date>/<string:to_date>/<string:mobile_number>')
+
+# api for updating pay status who paid the amount
+api.add_resource(UpdatePayStatus,'/updatePayStatus')
+
+# api for fecthing plan type from db
+api.add_resource(UserDetails,'/userDetails/<string:mobile_number>')
+
+
+# api for fecthing plan type from db
+api.add_resource(getUniqueOffers,'/userOffer/<string:mobile_number>')
+
+api.add_resource(BillReminder,'/billReminder')
+
+
+
+app.run(port=port,debug=True)
+# ____________________________________________________________________________________________________________________________
+
+
+
+
